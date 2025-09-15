@@ -22,6 +22,23 @@
 
 ![warp_into_terminal0001-0195](./resources/graphics/warp_in_2.gif)
 
+## GO version guide
+
+Here is a working guide to getting the go version "hello world" to work
+
+1. Make sure submodules are up to date
+```sh
+git submodule update --init --recursive
+```
+2. Build the c code
+```sh
+task c-interop:build
+```
+3. Run the go code
+```sh
+LD_LIBRARY_PATH=./deps/libinterop/lib/x86_64-linux-gnu go run ./go_src
+```
+
 ## Even over ssh!
 Behold as I play a [video game in a font](https://github.com/mmulet/font-game-engine) in a web browser in a terminal transmitted over ssh (with one hand tied behind my back)!
 
