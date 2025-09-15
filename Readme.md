@@ -38,6 +38,11 @@ task c-interop:build
 ```sh
 LD_LIBRARY_PATH=./deps/libinterop/lib/x86_64-linux-gnu go run ./go_src
 ```
+Here is an example of it running in Go. It prints hello world, a white block, then exits.
+
+https://github.com/user-attachments/assets/a9d59037-3429-40fc-bebc-94236044b1eb
+
+
 
 ## Even over ssh!
 Behold as I play a [video game in a font](https://github.com/mmulet/font-game-engine) in a web browser in a terminal transmitted over ssh (with one hand tied behind my back)!
