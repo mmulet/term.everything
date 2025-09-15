@@ -18,9 +18,7 @@
   </tr>
 </table>
 
-## Run every GUI app in the terminal!
 
-![warp_into_terminal0001-0195](./resources/graphics/warp_in_2.gif)
 
 ## GO version guide
 
@@ -42,7 +40,9 @@ Here is an example of it running in Go. It prints hello world, a white block, th
 
 https://github.com/user-attachments/assets/a9d59037-3429-40fc-bebc-94236044b1eb
 
+## Run every GUI app in the terminal!
 
+![warp_into_terminal0001-0195](./resources/graphics/warp_in_2.gif)
 
 ## Even over ssh!
 Behold as I play a [video game in a font](https://github.com/mmulet/font-game-engine) in a web browser in a terminal transmitted over ssh (with one hand tied behind my back)!
