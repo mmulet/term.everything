@@ -45,12 +45,11 @@ These are the versions of the tools used to build and run the project:
 - Bun 1.2.21
 - Taskfile v3.44.1
 - Meson 1.9.0
+- ninja v1.13.1
 - pkg-cofig 1.8.1
 - gcc 13.3.0
 - cmake 3.28.3
 - see third_party/Readme.md for the versions of the bundled dependencies
-
-
 
 
 # Running and building
