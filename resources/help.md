@@ -89,3 +89,9 @@ Show this help message.
 
 `--licenses`
 Print the open source licenses of libraries used in this app.
+
+`--reverse-scroll`
+Reverse scroll direction. It's great if you ssh into a linux machine from a mac.
+
+`--debug-log`
+Log most debug statements to debug.log instead of printing to console

@@ -10,7 +10,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       curl \
       pkg-config build-essential cmake ninja-build \
-      libglib2.0-dev chafa libchafa-dev \
+      libglib2.0-dev  \
       software-properties-common \
       file unzip autoconf automake libtool \
       libfreetype-dev

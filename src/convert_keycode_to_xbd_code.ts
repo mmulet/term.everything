@@ -71,7 +71,11 @@ export const alpha_keys = [
 
 export type XKBD_CODE = Key_code | Pointer_EVENT;
 
-export type Pointer_EVENT = Pointer_Move | Pointer_Button | Pointer_wheel;
+export type Pointer_EVENT =
+  | Pointer_Move
+  | Pointer_Button_Press
+  | Pointer_Button_Release
+  | Pointer_wheel;
 
 export interface Key_code {
   type: "key_code";
@@ -86,11 +90,20 @@ export interface Pointer_Move {
   modifiers: number;
 }
 
-export interface Pointer_Button {
-  type: "pointer_button";
+export interface Pointer_Button_Press {
+  type: "pointer_button_press";
   modifiers: number;
   button: LINUX_BUTTON_CODES;
-  pressed: boolean;
+}
+
+/**
+ * Pointer button release is special
+ * because we can't be sure of which
+ * button is being released
+ */
+export interface Pointer_Button_Release {
+  type: "pointer_button_release";
+  modifiers: number;
 }
 
 export interface Pointer_wheel {

@@ -17,13 +17,14 @@ import {
   LINUX_MODIFIERS,
 } from "./convert_keycode_to_xbd_code.ts";
 import { never_default } from "./never_default.ts";
-import { Linux_Event_Codes } from "./Linux_Event_Codes.ts";
+import { LINUX_BUTTON_CODES, Linux_Event_Codes } from "./Linux_Event_Codes.ts";
 import { Ansi_Escape_Codes } from "./Ansi_Escape_Codes.ts";
 import { debug_turn_off_output } from "./debug_turn_off_output.ts" with { type: "macro" };
 import { Canvas_Desktop } from "./Canvas_Desktop.ts";
 import { Status_Line } from "./Status_Line.ts";
 import { on_exit } from "./on_exit.ts";
 import { Display_Server_Type } from "./get_display_server_type.ts";
+import { Command_Line_args } from "./parse_args.ts";
 
 export type Cells = number & { __brand: "cells" };
 export type Pixels = number & { __brand: "pixels" };
@@ -81,7 +82,8 @@ export class Terminal_Window {
     public socket_listener: Wayland_Socket_Listener,
     public hide_status_bar: boolean,
     desktop_size: Pixel_Size,
-    will_show_app_right_at_startup: boolean
+    will_show_app_right_at_startup: boolean,
+    public args: Command_Line_args
   ) {
     this.canvas_desktop = new Canvas_Desktop(
       desktop_size,
@@ -118,6 +120,8 @@ export class Terminal_Window {
   };
   key_serial = 0;
 
+  pressed_mouse_button: LINUX_BUTTON_CODES | null = null;
+
   input_loop = async () => {
     for await (const chunk of Bun.stdin.stream()) {
       // console.log("chunk", chunk);
@@ -135,9 +139,8 @@ export class Terminal_Window {
         const new_key_serial = this.key_serial;
         this.key_serial += 2;
         for (const s of this.socket_listener.clients) {
-          s
-            .get_global_binds(Global_Ids.wl_keyboard)
-            ?.forEach((_version, keyboard_Id) => {
+          s.get_global_binds(Global_Ids.wl_keyboard)?.forEach(
+            (_version, keyboard_Id) => {
               wl_keyboard.modifiers(
                 s,
                 keyboard_Id,
@@ -147,16 +150,16 @@ export class Terminal_Window {
                 0,
                 0
               );
-            });
+            }
+          );
         }
 
         switch (code.type) {
           case "key_code":
             this.keys_pressed_this_frame.add(code.key_code);
             for (const s of this.socket_listener.clients) {
-              s
-                .get_global_binds(Global_Ids.wl_keyboard)
-                ?.forEach((_version, keyboard_Id) => {
+              s.get_global_binds(Global_Ids.wl_keyboard)?.forEach(
+                (_version, keyboard_Id) => {
                   wl_keyboard.key(
                     s,
                     keyboard_Id,
@@ -179,7 +182,8 @@ export class Terminal_Window {
                     code.key_code,
                     wl_keyboard_key_state.released
                   );
-                });
+                }
+              );
             }
             break;
           case "pointer_move": {
@@ -207,34 +211,74 @@ export class Terminal_Window {
             this.status_line.update_mouse_position(code);
 
             for (const s of this.socket_listener.clients) {
-              s
-                .get_global_binds(Global_Ids.wl_pointer)
-                ?.forEach((version, pointer_id) => {
+              s.get_global_binds(Global_Ids.wl_pointer)?.forEach(
+                (version, pointer_id) => {
                   wl_pointer.motion(s, pointer_id, Date.now(), x, y);
 
                   wl_pointer.frame(s, version, pointer_id);
-                });
+                }
+              );
             }
             break;
           }
-          case "pointer_button": {
-            this.status_line.handle_terminal_mouse_press(code);
+          case "pointer_button_press": {
+            this.status_line.handle_terminal_mouse_press(true);
+
+            const release_button =
+              this.get_button_to_release_and_update_pressed_mouse_button(
+                code.button
+              );
+
             for (const s of this.socket_listener.clients) {
-              s
-                .get_global_binds(Global_Ids.wl_pointer)
-                ?.forEach((version, pointer_id) => {
+              s.get_global_binds(Global_Ids.wl_pointer)?.forEach(
+                (version, pointer_id) => {
                   wl_pointer.button(
                     s,
                     pointer_id,
                     Date.now(),
                     Date.now(),
                     code.button,
-                    code.pressed
-                      ? wl_pointer_button_state.pressed
-                      : wl_pointer_button_state.released
+                    wl_pointer_button_state.pressed
                   );
                   wl_pointer.frame(s, version, pointer_id);
-                });
+                  if (release_button !== null) {
+                    wl_pointer.button(
+                      s,
+                      pointer_id,
+                      Date.now(),
+                      Date.now(),
+                      release_button,
+                      wl_pointer_button_state.released
+                    );
+                    wl_pointer.frame(s, version, pointer_id);
+                  }
+                }
+              );
+            }
+            break;
+          }
+          case "pointer_button_release": {
+            if (this.pressed_mouse_button == null) {
+              break;
+            }
+            const button_to_release = this.pressed_mouse_button;
+            this.pressed_mouse_button = null;
+            this.status_line.handle_terminal_mouse_press(false);
+
+            for (const s of this.socket_listener.clients) {
+              s.get_global_binds(Global_Ids.wl_pointer)?.forEach(
+                (version, pointer_id) => {
+                  wl_pointer.button(
+                    s,
+                    pointer_id,
+                    Date.now(),
+                    Date.now(),
+                    button_to_release,
+                    wl_pointer_button_state.released
+                  );
+                  wl_pointer.frame(s, version, pointer_id);
+                }
+              );
             }
             break;
           }
@@ -242,12 +286,12 @@ export class Terminal_Window {
             const scale = code.modifiers & LINUX_MODIFIERS.alt ? 1 : 0.5;
             const amount =
               (scale *
-                ((code.up ? 1 : -1) * this.virtual_monitor_size.height)) /
+                (this.scroll_direction(code.up) *
+                  this.virtual_monitor_size.height)) /
               (this.rendered_screen_size?.height_cells ?? process.stdout.rows);
             for (const s of this.socket_listener.clients) {
-              s
-                .get_global_binds(Global_Ids.wl_pointer)
-                ?.forEach((version, pointer_id) => {
+              s.get_global_binds(Global_Ids.wl_pointer)?.forEach(
+                (version, pointer_id) => {
                   wl_pointer.axis(
                     s,
                     pointer_id,
@@ -256,7 +300,8 @@ export class Terminal_Window {
                     amount
                   );
                   wl_pointer.frame(s, version, pointer_id);
-                });
+                }
+              );
             }
             break;
           }
@@ -266,6 +311,30 @@ export class Terminal_Window {
         }
       }
     }
+  };
+
+  scroll_direction = (code_up: boolean) => {
+    const code = code_up ? -1 : 1;
+    const reverse = this.args.values["reverse-scroll"] ? -1 : 1;
+    return code * reverse;
+  };
+  /**
+   * Because we only get release updates for one button at a time
+   * assume that when you press another mouse button you will
+   * release the one you already have pressed.
+   */
+  get_button_to_release_and_update_pressed_mouse_button = (
+    new_pressed_button: LINUX_BUTTON_CODES
+  ): LINUX_BUTTON_CODES | null => {
+    const old_pressed_mouse_button = this.pressed_mouse_button;
+    this.pressed_mouse_button = new_pressed_button;
+    if (
+      old_pressed_mouse_button == null ||
+      this.pressed_mouse_button == new_pressed_button
+    ) {
+      return null;
+    }
+    return old_pressed_mouse_button;
   };
 
   desired_frame_time_seconds = 0.016; // 60 fps

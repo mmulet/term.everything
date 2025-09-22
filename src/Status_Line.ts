@@ -1,4 +1,7 @@
-import { Pointer_Button, Pointer_Move } from "./convert_keycode_to_xbd_code.ts";
+import {
+  Pointer_Button_Press,
+  Pointer_Move,
+} from "./convert_keycode_to_xbd_code.ts";
 import { Linux_Event_Codes } from "./Linux_Event_Codes.ts";
 import { Cells } from "./Terminal_Window.ts";
 import open from "open";
@@ -35,8 +38,8 @@ export class Status_Line {
     this.terminal_mouse_position.y = code.row as Cells;
   };
 
-  handle_terminal_mouse_press = (code: Pointer_Button) => {
-    if (code.pressed) {
+  handle_terminal_mouse_press = (pressed: boolean) => {
+    if (pressed) {
       if (this.terminal_mouse_button.pressed) {
         /**
          * Mouse state has not changed

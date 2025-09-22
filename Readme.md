@@ -88,7 +88,12 @@ Terminal in a terminal in a terminal in a terminal in a terminal.... it's termin
 With only a small amount hacking, it can run Doom (shareware episode)!
 
 ![Doom](./resources/graphics/doom.gif)
+------
+Run an entire Desktop in your terminal!
+[@ismail-yilmaz](https://github.com/ismail-yilmaz) is running Firefox, on [KDE Neon](https://neon.kde.org) in a [VM](https://gitlab.gnome.org/GNOME/gnome-boxes) on [Bobcat](https://github.com/ismail-yilmaz/Bobcat)
+![Desktop in VM](./resources/graphics/desktop_in_vm.gif)
 
+And this isn't even full resolution! Checkout the [full vid in in the discussions](https://github.com/mmulet/term.everything/discussions/16#discussioncomment-14390137)
 
 ## About
 `term.everything❗` is a Linux CLI program to run GUI windows in your terminal. Specifically, `term.everything❗` is a built-from-scratch [Wayland](https://wiki.archlinux.org/title/Wayland) compositor that outputs to a terminal rather than your monitor.

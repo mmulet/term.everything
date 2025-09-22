@@ -65,13 +65,37 @@ export const pointer_code = (data: Uint8Array): Pointer_EVENT | null => {
     case 48:
     case 56:
       /**
-       * Mouse button down
+       * Mouse button left down
        */
       return {
-        type: "pointer_button",
-        pressed: true,
+        type: "pointer_button_press",
         button: LINUX_BUTTON_CODES.BTN_LEFT,
         modifiers: mouse_modifiers(d, 32),
+      };
+    case 33:
+    case 41:
+    case 49:
+    case 57:
+      /**
+       * Mouse button left down
+       */
+      return {
+        type: "pointer_button_press",
+        button: LINUX_BUTTON_CODES.BTN_MIDDLE,
+        modifiers: mouse_modifiers(d, 33),
+      };
+
+    case 34:
+    case 42:
+    case 50:
+    case 58:
+      /**
+       * Mouse button right down
+       */
+      return {
+        type: "pointer_button_press",
+        button: LINUX_BUTTON_CODES.BTN_RIGHT,
+        modifiers: mouse_modifiers(d, 34),
       };
 
     case 35:
@@ -82,9 +106,7 @@ export const pointer_code = (data: Uint8Array): Pointer_EVENT | null => {
        * Mouse button up
        */
       return {
-        type: "pointer_button",
-        button: LINUX_BUTTON_CODES.BTN_LEFT,
-        pressed: false,
+        type: "pointer_button_release",
         modifiers: mouse_modifiers(d, 35),
       };
 

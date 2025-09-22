@@ -1,5 +1,5 @@
 {
-  "version": "0.5.1",
+  "version": "0.5.3",
   "dependencies": {
     "canvas": "3.2.0",
     "open": "10.2.0"
