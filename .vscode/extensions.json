@@ -6,6 +6,7 @@
     "esbenp.prettier-vscode",
     "slevesque.shader",
     "task.vscode-task",
-    "redhat.vscode-yaml"
+    "redhat.vscode-yaml",
+    "golang.Go"
   ]
 }
