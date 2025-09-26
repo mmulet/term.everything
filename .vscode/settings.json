@@ -154,5 +154,6 @@
   "editor.wordWrap": "off",
   "editor.rulers": [
     80
-  ]
+  ],
+  "editor.insertSpaces": true
 }

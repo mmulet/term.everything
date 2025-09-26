@@ -1,7 +1,9 @@
 package main
 
 // #cgo CFLAGS: -I${SRCDIR}/../c_interop/include
-// #cgo LDFLAGS: -L${SRCDIR}/../deps/libinterop/lib/x86_64-linux-gnu -linterop
+// #cgo LDFLAGS: -L${SRCDIR}/../c_interop/build -l:libinterop.a -lstdc++
+// #cgo LDFLAGS: -L${SRCDIR}/../deps/chafa/lib -l:libchafa.a -lm -lglib-2.0
+// #cgo LDFLAGS: -pthread -lpcre2-8
 // #include "init_draw_state_go.h"
 // #include "draw_desktop_go.h"
 import "C"

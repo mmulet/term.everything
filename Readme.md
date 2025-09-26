@@ -30,11 +30,18 @@ git submodule update --init --recursive
 ```
 2. Build the c code
 ```sh
-task c-interop:build
+cd c_interop
+# This will build the c code and dependencies
+make
 ```
 3. Run the go code
 ```sh
-LD_LIBRARY_PATH=./deps/libinterop/lib/x86_64-linux-gnu go run ./go_src
+go run ./go_src
+```
+
+4. Building
+```sh
+go build -o test_go ./go_src
 ```
 Here is an example of it running in Go. It prints hello world, a white block, then exits.
 
