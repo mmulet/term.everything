@@ -8,9 +8,9 @@ protocols_files := $(shell find ./wayland/generate)
 
 xml_protocols := $(shell find ./wayland/generate -name "*.xml")
 
-generated_protocols := $(patsubst ./wayland/generate/resources/%,./wayland/protocols/%.go,$(xml_protocols))
+generated_protocols := $(patsubst ./wayland/generate/resources/%, ./wayland/protocols/%.go, $(xml_protocols))
 
-generated_helpers := $(patsubst ./wayland/generate/resources/%,./wayland/%.helper.go,$(xml_protocols))
+generated_helpers := $(patsubst ./wayland/generate/resources/%, ./wayland/%.helper.go, $(xml_protocols))
 
 build: $(generated_protocols) $(generated_helpers) $(bin_name)
 

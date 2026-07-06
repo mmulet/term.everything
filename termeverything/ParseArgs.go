@@ -28,6 +28,7 @@ type CommandLineArgs struct {
 	ReverseScroll         bool
 	MaxFrameRate          string
 	Positionals           []string
+	Verbose               bool
 }
 
 func (args *CommandLineArgs) WaylandDisplayName() string {
@@ -41,7 +42,7 @@ func ParseArgs() CommandLineArgs {
 	flag.BoolVar(&args.SupportOldApps, "support-old-apps", false, "")
 	flag.StringVar(&args.Xwayland, "xwayland", "", "")
 	flag.StringVar(&args.XwaylandWM, "xwayland-wm", "", "")
-	flag.StringVar(&args.Shell, "shell", "/bin/bash", "")
+	flag.StringVar(&args.Shell, "shell", "/bin/sh", "")
 	flag.BoolVar(&args.HideStatusBar, "hide-status-bar", false, "")
 	flag.StringVar(&args.VirtualMonitorSize, "virtual-monitor-size", "", "")
 	versionFlag := flag.Bool("version", false, "")
@@ -51,7 +52,7 @@ func ParseArgs() CommandLineArgs {
 	licensesFlag := flag.Bool("licenses", false, "")
 	flag.BoolVar(&args.ReverseScroll, "reverse-scroll", false, "")
 	flag.StringVar(&args.MaxFrameRate, "max-frame-rate", "", "")
-
+	flag.BoolVar(&args.Verbose, "verbose", false, "")
 	flag.Parse()
 
 	if *versionFlag {
