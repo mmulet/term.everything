@@ -8,37 +8,56 @@ APP_NAME="term.everything❗mmulet.com-dont_forget_to_chmod_+x_this_file"
 
 
 get_distro() {
-    # Try to detect the distro
     if [ -f /etc/os-release ]; then
         . /etc/os-release
-        DISTRO=$ID
     else
-        DISTRO="unknown"
+        echo "unknown"
+        return
     fi
 
-    case $DISTRO in
-        ubuntu|debian)
-            echo "sudo apt update && sudo apt install -y "
-            ;;
-        fedora)
-            echo "sudo dnf install -y "
-            ;;
-        centos|rhel|rocky|almalinux)
-            echo "sudo yum install -y "
-            ;;
-        arch|manjaro)
-            echo "sudo pacman -S "
-            ;;
-        opensuse*)
-            echo "sudo zypper install "
-            ;;
-        alpine)
-            echo "sudo apk add "
-            ;;
-        *)
-            echo "Please install podman using your distribution's package manager"
-            ;;
-    esac
+    # Check ID first, then fall back to ID_LIKE
+    for id in $ID $ID_LIKE; do
+        case $id in
+            ubuntu|debian|linuxmint|pop)
+                echo "sudo apt install -y"
+                return
+                ;;
+            fedora)
+                echo "sudo dnf install -y"
+                return
+                ;;
+            centos|rhel|rocky|almalinux)
+                echo "sudo yum install -y"
+                return
+                ;;
+            arch|manjaro|cachyos|endeavouros|garuda)
+                echo "sudo pacman -S"
+                return
+                ;;
+            opensuse*|suse)
+                echo "sudo zypper install"
+                return
+                ;;
+            alpine)
+                echo "sudo apk add"
+                return
+                ;;
+            void)
+                echo "sudo xbps-install -S"
+                return
+                ;;
+            gentoo)
+                echo "sudo emerge"
+                return
+                ;;
+            nixos)
+                echo "nix-env -iA nixpkgs."
+                return
+                ;;
+        esac
+    done
+
+    echo "unknown"
 }
 
 if ! command -v podman >/dev/null 2>&1; then

@@ -1,20 +1,15 @@
-package termeverything
+package wayland
 
 import (
 	"bytes"
-	_ "embed"
 	"image"
 	"image/draw"
 	_ "image/png"
 	"sort"
 	"time"
 
-	"github.com/mmulet/term.everything/wayland"
 	"github.com/mmulet/term.everything/wayland/protocols"
 )
-
-//go:embed resources/icon.png
-var iconPNG []byte
 
 type Desktop struct {
 	Width  int
@@ -31,7 +26,7 @@ type Desktop struct {
 	WillShowAppRightAtStartup bool
 }
 
-func MakeDesktop(size wayland.Size, willShowAppRightAtStartup bool) *Desktop {
+func MakeDesktop(size Size, willShowAppRightAtStartup bool, iconPNG []byte) *Desktop {
 	w := int(size.Width)
 	h := int(size.Height)
 	buf := make([]byte, w*h*4)
@@ -124,7 +119,7 @@ func (cd *Desktop) Clear() {
 }
 
 type SortedSurfaceEntry struct {
-	Surface   *wayland.WlSurface
+	Surface   *WlSurface
 	Src       *image.RGBA
 	SurfaceID protocols.ObjectID[protocols.WlSurface]
 }
@@ -134,7 +129,7 @@ type SortedSurfaceEntryParentLocation struct {
 	x, y     int
 }
 
-func (cd *Desktop) DrawClients(clients []*wayland.Client) {
+func (cd *Desktop) DrawClients(clients []*Client) {
 
 	sorted := make([]SortedSurfaceEntry, 0, 64)
 
@@ -145,7 +140,7 @@ func (cd *Desktop) DrawClients(clients []*wayland.Client) {
 			continue
 		}
 		for surface_id := range c.DrawableSurfaces() {
-			surface := wayland.GetWlSurfaceObject(c, surface_id)
+			surface := GetWlSurfaceObject(c, surface_id)
 			if surface == nil {
 				continue
 			}

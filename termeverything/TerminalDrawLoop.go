@@ -1,6 +1,7 @@
 package termeverything
 
 import (
+	_ "embed"
 	"os"
 	"slices"
 	"strconv"
@@ -10,6 +11,9 @@ import (
 	"github.com/mmulet/term.everything/wayland"
 	"github.com/mmulet/term.everything/wayland/protocols"
 )
+
+//go:embed resources/icon.png
+var iconPNG []byte
 
 type FrameInputState struct {
 	KeysPressedThisFrame map[Linux_Event_Codes]bool
@@ -43,7 +47,7 @@ type TerminalDrawLoop struct {
 
 	DrawState *framebuffertoansi.DrawState
 
-	Desktop *Desktop
+	Desktop *wayland.Desktop
 
 	SharedRenderedScreenSize *RenderedScreenSize
 
@@ -80,10 +84,10 @@ func MakeTerminalDrawLoop(desktop_size wayland.Size,
 		),
 		VirtualMonitorSize: desktop_size,
 
-		Desktop: MakeDesktop(wayland.Size{
+		Desktop: wayland.MakeDesktop(wayland.Size{
 			Width:  desktop_size.Width,
 			Height: desktop_size.Height,
-		}, willShowAppRightAtStartup),
+		}, willShowAppRightAtStartup, iconPNG),
 
 		TimeOfStartOfLastFrame:  nil,
 		DesiredFrameTimeSeconds: 0.016, // ~60 FPS

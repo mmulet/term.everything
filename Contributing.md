@@ -25,7 +25,7 @@ Below are all the dependencies this app needs.
 
 ## Deps:
 
-- Download the following dependecies from your system's package manager. On ubuntu use: `sudo apt install pkg-config libchafa-dev build-essential`
+- Download the following dependecies from your system's package manager. On ubuntu use: `sudo apt install pkg-config libchafa-dev build-essential libglib2.0-dev`
 - Optional: [vscode](https://code.visualstudio.com/) with these recommended extensions:
     - "ms-vscode.cpptools-extension-pack",
     - "golang.go",

@@ -6,7 +6,6 @@ import (
 	"os/signal"
 	"slices"
 	"syscall"
-	"time"
 
 	"github.com/mmulet/term.everything/escapecodes"
 	"github.com/mmulet/term.everything/framebuffertoansi"
@@ -38,8 +37,6 @@ type TerminalWindow struct {
 
 	Args *CommandLineArgs
 
-	KeySerial uint32
-
 	PressedMouseButton *LINUX_BUTTON_CODES
 
 	Clients []*wayland.Client
@@ -69,7 +66,6 @@ func MakeTerminalWindow(
 		Mode:                     WindowMode_Passthrough,
 		FrameEvents:              make(chan XkbdCode, 8192),
 		Args:                     args,
-		KeySerial:                0,
 		PressedMouseButton:       nil,
 		SharedRenderedScreenSize: &RenderedScreenSize{},
 		Clients:                  make([]*wayland.Client, 0),
@@ -166,21 +162,19 @@ func (tw *TerminalWindow) ProcessCodes(codes []XkbdCode) {
 		index := clients_to_delete[i]
 		tw.Clients = slices.Delete(tw.Clients, index, index+1)
 	}
-	now := uint32(time.Now().UnixMilli())
 
 	for _, code := range codes {
 		tw.FrameEvents <- code
-		new_key_serial := tw.KeySerial
-		tw.KeySerial += 2
 
 		for _, s := range tw.Clients {
 			if keyboard_map := protocols.GetGlobalWlKeyboardBinds(s); keyboard_map != nil {
 				modifiers := code.GetModifiers()
+				ser := wayland.GetNextEventSerial()
 				for keyboardID := range keyboard_map {
 					protocols.WlKeyboard_modifiers(
 						s,
 						keyboardID,
-						new_key_serial,
+						ser,
 						uint32(modifiers),
 						0, 0, 0,
 					)
@@ -189,34 +183,9 @@ func (tw *TerminalWindow) ProcessCodes(codes []XkbdCode) {
 		}
 		switch c := code.(type) {
 		case *KeyCode:
-			for _, s := range tw.Clients {
-				if keyboard_map := protocols.GetGlobalWlKeyboardBinds(s); keyboard_map != nil {
-					for keyboardID := range keyboard_map {
-						protocols.WlKeyboard_key(
-							s,
-							keyboardID,
-							new_key_serial,
-							now,
-							uint32(c.KeyCode),
-							protocols.WlKeyboardKeyState_enum_pressed,
-						)
-						/**
-						 * There is no key up code in
-						 * ANSI escape codes, so
-						 * just say it is released
-						 * instantly
-						 */
-						protocols.WlKeyboard_key(
-							s,
-							keyboardID,
-							new_key_serial+1,
-							now,
-							uint32(c.KeyCode),
-							protocols.WlKeyboardKeyState_enum_released,
-						)
-					}
-				}
-			}
+			wayland.SendKeyboardKey(tw.Clients, uint32(c.KeyCode), true)
+			// Send key released immediately
+			wayland.SendKeyboardKey(tw.Clients, uint32(c.KeyCode), false)
 
 		case *PointerMove:
 			cols, rows := tw.CurrentTerminalSize()
@@ -227,65 +196,14 @@ func (tw *TerminalWindow) ProcessCodes(codes []XkbdCode) {
 				(float32(tw.VirtualMonitorSize.Height) /
 					float32(rows))
 
-			wayland.Pointer.WindowX = x
-			wayland.Pointer.WindowY = y
-
-			for _, s := range tw.Clients {
-				if pointers_map := protocols.GetGlobalWlPointerBinds(s); pointers_map != nil {
-					for pointerID, version := range pointers_map {
-						protocols.WlPointer_motion(
-							s,
-							pointerID,
-							uint32(time.Now().UnixMilli()),
-							x,
-							y,
-						)
-						protocols.WlPointer_frame(
-							s,
-							uint32(version),
-							pointerID,
-						)
-					}
-				}
-			}
+			wayland.SendPointerMotion(tw.Clients, x, y)
 
 		case *PointerButtonPress:
 
 			release := tw.GetButtonToReleaseAndUpdatePressedMouseButton(c.Button)
-			for _, s := range tw.Clients {
-
-				if pointer_map := protocols.GetGlobalWlPointerBinds(s); pointer_map != nil {
-					for pointerID, version := range pointer_map {
-						protocols.WlPointer_button(
-							s,
-							pointerID,
-							uint32(time.Now().UnixMilli()),
-							uint32(time.Now().UnixMilli()),
-							uint32(c.Button),
-							protocols.WlPointerButtonState_enum_pressed,
-						)
-						protocols.WlPointer_frame(
-							s,
-							uint32(version),
-							pointerID,
-						)
-						if c.NeedToReleaseOtherButtons && release != nil {
-							protocols.WlPointer_button(
-								s,
-								pointerID,
-								uint32(time.Now().UnixMilli()),
-								uint32(time.Now().UnixMilli()),
-								uint32(*release),
-								protocols.WlPointerButtonState_enum_released,
-							)
-							protocols.WlPointer_frame(
-								s,
-								uint32(version),
-								pointerID,
-							)
-						}
-					}
-				}
+			wayland.SendPointerButton(tw.Clients, uint32(c.Button), true)
+			if c.NeedToReleaseOtherButtons && release != nil {
+				wayland.SendPointerButton(tw.Clients, uint32(*release), false)
 			}
 
 		case *PointerButtonRelease:
@@ -298,26 +216,7 @@ func (tw *TerminalWindow) ProcessCodes(codes []XkbdCode) {
 				tw.PressedMouseButton = nil
 			}
 
-			for _, s := range tw.Clients {
-
-				if pointer_map := protocols.GetGlobalWlPointerBinds(s); pointer_map != nil {
-					for pointerID, version := range pointer_map {
-						protocols.WlPointer_button(
-							s,
-							pointerID,
-							uint32(time.Now().UnixMilli()),
-							uint32(time.Now().UnixMilli()),
-							uint32(buttonToRelease),
-							protocols.WlPointerButtonState_enum_released,
-						)
-						protocols.WlPointer_frame(
-							s,
-							uint32(version),
-							pointerID,
-						)
-					}
-				}
-			}
+			wayland.SendPointerButton(tw.Clients, uint32(buttonToRelease), false)
 
 		case *PointerWheel:
 			_, rows := tw.CurrentTerminalSize()
@@ -327,24 +226,7 @@ func (tw *TerminalWindow) ProcessCodes(codes []XkbdCode) {
 				scale = 1
 			}
 			amount := scale * float32(tw.ScrollDirection(c.Up)) * float32(tw.VirtualMonitorSize.Height) / float32(rows)
-			for _, s := range tw.Clients {
-				if pointer_id := protocols.GetGlobalWlPointerBinds(s); pointer_id != nil {
-					for pointerID, version := range pointer_id {
-						protocols.WlPointer_axis(
-							s,
-							pointerID,
-							uint32(time.Now().UnixMilli()),
-							protocols.WlPointerAxis_enum_vertical_scroll,
-							amount,
-						)
-						protocols.WlPointer_frame(
-							s,
-							uint32(version),
-							pointerID,
-						)
-					}
-				}
-			}
+			wayland.SendPointerAxis(tw.Clients, protocols.WlPointerAxis_enum_vertical_scroll, amount)
 		default:
 			// literal never_default(code) equivalent: do nothing
 		}

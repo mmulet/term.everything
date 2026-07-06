@@ -23,8 +23,6 @@ third_party/chafa_source/build
 debug.log
 
 resources/out/bunterm
-wayland/protocols/*.xml.go
-wayland/*.helper.go
 __debug_bin*
 term.everything
 term.everything❗mmulet.com-dont_forget_to_chmod_+x_this_file
